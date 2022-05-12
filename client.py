@@ -19,7 +19,7 @@ NUMSYS_RANGES = [
     (0x30A0, 0x30FF),  # Katakana
     (0x3130, 0x318F),  # Hangul Compatibility Jamo
     (0x31F0, 0x31FF),  # Katakana Phonetic Extensions
-    (0x4E00, 0x9FA5),  # Chinese
+    # (0x4E00, 0x9FA5),  # Chinese
     (0xAC00, 0xD7A3),  # Korean
 ]
 SENSITIVES = {
@@ -61,6 +61,13 @@ SENSITIVES = {
     27682,
     23014,
     14011,
+    22904,
+    28846,
+    38452,
+    30908,
+    30721,
+    32956,
+    26426,
     27686,
     38146,
     38093,
