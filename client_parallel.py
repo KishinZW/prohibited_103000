@@ -1,8 +1,9 @@
-import py7zr, os, json, hashlib, requests
+import py7zr, os, json, hashlib, requests, threading, multiprocessing
 from cryptography.fernet import Fernet
 from base64 import urlsafe_b64encode as ub64e
 from getpass import getpass
 from time import time
+from bs4 import BeautifulSoup as BS
 
 NUMSYS_RANGES = [
     (32, 126),         # ASCII Printable
@@ -68,6 +69,44 @@ HEADERS = {
 }
 
 
+THREAD_LOCK = threading.RLock()
+PROCESS_LOCK = multiprocessing.RLock()
+def atomic_print(string, lock):
+    with lock:
+        print(string)
+
+
+class UniversalPool:
+    def __init__(self, parallel_cls):
+        self.parallel_cls = parallel_cls
+        self.workers = []
+    
+    def add(self, func, args: tuple):
+        self.workers.append(self.parallel_cls(target=func, args=args))
+    
+    def start_all(self):
+        for worker in self.workers:
+            worker.start()
+    
+    def join_all(self):
+        for worker in self.workers:
+            worker.join()
+
+
+class ProxyPool:
+    def __init__(self, proxy_source):
+        self.proxy_source = proxy_source
+        self.proxies = []
+    
+    def update(self, size):
+        url = self.proxy_source % 1
+        resp = requests.get(url)
+        soup = BS(resp.text, features='lxml')
+        while len(self.proxies) < size:
+            for tag in soup.select('table tr'):
+                proxy = f'''http://{tag.find('td[data-title="IP"]')}:{tag.find('td[data-title="PORT"]')}'''
+
+
 password = getpass("Please input password")
 if len(password) > 32:
     print("password is too long")
@@ -79,10 +118,6 @@ for h in hashpool:
 offset = sum(map(lambda h: int(h.hexdigest(), base=16), hashpool)) % HASHSIZE
 hashpool = [hashlib.sha3_224(), hashlib.blake2b(digest_size=28)]
 
-
-workdir = input("Please input the output directory: ")
-os.chdir(workdir)
-print(f"Working at: {os.getcwd()}")
 
 resname = input("Please input resource name: ")
 for h in hashpool:
